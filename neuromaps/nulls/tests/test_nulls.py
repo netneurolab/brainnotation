@@ -117,6 +117,7 @@ def test_fixture_surface_parcellated_smoke(sample_surface_parcellated):
     # print(surf_tuple, parc_name, annot_parc.shape[0])
     pass
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning") # nilearn/nilearn/pull/3722
 def test_fixture_volume_parcellated_smoke(sample_volume_parcellated):
     vol_tuple, parc_name, annot_parc = sample_volume_parcellated
     # print(vol_tuple, parc_name, annot_parc.shape[0])

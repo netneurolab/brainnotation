@@ -2,7 +2,14 @@
 """Functionality for parcellating data."""
 
 import nibabel as nib
+<<<<<<< HEAD
 from nilearn.maskers import NiftiLabelsMasker
+=======
+try:
+    from nilearn.maskers import NiftiLabelsMasker
+except:
+    from nilearn.input_data import NiftiLabelsMasker
+>>>>>>> 276cdaf ([FIX] Fix deprecations)
 from nilearn.image import new_img_like
 from nilearn.masking import compute_background_mask
 import numpy as np

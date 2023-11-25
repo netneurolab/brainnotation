@@ -2,7 +2,12 @@
 """Functions for working with data/osf.json file."""
 
 import os
-from pkg_resources import resource_filename
+try:
+    import importlib.resources
+    _importlib_avail = True
+except ImportError:
+    from pkg_resources import resource_filename
+    _importlib_avail = False
 import json
 
 from nilearn.datasets.utils import _md5_sum_file
@@ -23,9 +28,12 @@ REDIR_KEYS = ['space', 'den']
 INFO_KEYS = ['source', 'refs', 'comments', 'demographics']
 
 # distribution JSON
-OSFJSON = resource_filename(
-    'neuromaps', os.path.join('datasets', 'data', 'osf.json')
-)
+if _importlib_avail:
+    OSFJSON = importlib.resources.files("neuromaps") / "datasets/data/osf.json"
+else:
+    OSFJSON = resource_filename(
+        'neuromaps', os.path.join('datasets', 'data', 'osf.json')
+    )
 
 
 def parse_filename(fname, return_ext=True, verbose=False):
