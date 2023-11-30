@@ -26,6 +26,7 @@ def test_parse_fname_list():
 
 
 def test_parse_json():
+    """Test parsing a JSON file."""
     if _importlib_avail:
         osf = importlib.resources.files("neuromaps") / "datasets/data/osf.json"
     else:

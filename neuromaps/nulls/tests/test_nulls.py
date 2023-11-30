@@ -2,7 +2,7 @@
 """For testing neuromaps.nulls.nulls functionality."""
 
 import pytest
-from neuromaps.datasets import fetch_annotation, available_annotations
+from neuromaps.datasets import fetch_annotation
 from neuromaps.parcellate import Parcellater
 from neuromaps.images import annot_to_gifti, dlabel_to_gifti
 from netneurotools.datasets import fetch_schaefer2018, fetch_cammoun2012
@@ -32,6 +32,7 @@ sample_volume_parcellations = [
     ids=["_".join(_) for _ in sample_surface_maps]
 )
 def sample_surface(request):
+    """Fixture for surface annotation."""
     source, desc, space, den = request.param
     annot = fetch_annotation(
         source=source, desc=desc, space=space, den=den
@@ -44,6 +45,7 @@ def sample_surface(request):
     ids=["_".join(_) for _ in sample_volume_maps]
 )
 def sample_volume(request):
+    """Fixture for volume annotation."""
     source, desc, space, res = request.param
     annot = fetch_annotation(
         source=source, desc=desc, space=space, res=res
@@ -56,6 +58,7 @@ def sample_volume(request):
     ids=[_[0] for _ in sample_surface_parcellations]
 )
 def sample_surface_parcellated(sample_surface, request):
+    """Fixture for parcellated surface annotation."""
     surf_tuple, annot = sample_surface
     source, desc, space, den = surf_tuple
 
@@ -82,6 +85,7 @@ def sample_surface_parcellated(sample_surface, request):
     ids=[_[0] for _ in sample_volume_parcellations]
 )
 def sample_volume_parcellated(sample_volume, request):
+    """Fixture for parcellated volume annotation."""
     vol_tuple, annot = sample_volume
     source, desc, space, res = vol_tuple
 
@@ -98,27 +102,24 @@ def sample_volume_parcellated(sample_volume, request):
 
 
 def test_fixture_surface_smoke(sample_surface):
+    """Test fetching surface annotation."""
     # print(sample_surface[0])
     pass
 
 def test_fixture_volume_smoke(sample_volume):
+    """Test fetching volume annotation."""
     # print(sample_volume[0])
     pass
 
-# def test_fixture_surface_parcellated_smoke(sample_surface, sample_parcellation):
-#     print(sample_surface[0], sample_parcellation)
-
-# def test_fixture_volume_parcellated_smoke(sample_volume, sample_parcellation):
-#     print(sample_volume[0], sample_parcellation)
-
-
 def test_fixture_surface_parcellated_smoke(sample_surface_parcellated):
+    """Test fetching parcellated surface annotation."""
     surf_tuple, parc_name, annot_parc = sample_surface_parcellated
     # print(surf_tuple, parc_name, annot_parc.shape[0])
     pass
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning") # nilearn/nilearn/pull/3722
 def test_fixture_volume_parcellated_smoke(sample_volume_parcellated):
+    """Test fetching parcellated volume annotation."""
     vol_tuple, parc_name, annot_parc = sample_volume_parcellated
     # print(vol_tuple, parc_name, annot_parc.shape[0])
     pass
