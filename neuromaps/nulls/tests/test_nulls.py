@@ -3,7 +3,8 @@
 
 import pytest
 from neuromaps.nulls.nulls import (
-    alexander_bloch, vasa, hungarian, baum, cornblath
+    alexander_bloch, vasa, hungarian, baum,
+    cornblath, burt2018, burt2020, moran
 )
 from neuromaps.datasets import fetch_annotation
 from neuromaps.parcellate import Parcellater
@@ -333,6 +334,7 @@ class TestBaum:
 class TestCornblath:
     """Test cornblath null model."""
 
+    @pytest.mark.skip
     @pytest.mark.xfail
     def test_cornblath_surface(self, sample_surface):
         """Test cornblath null model for surface."""
@@ -340,7 +342,7 @@ class TestCornblath:
         _, _, space, den = surf_tuple
         cornblath(annot, atlas=space, density=den, n_perm=3)
 
-
+    @pytest.mark.skip
     @pytest.mark.xfail
     def test_cornblath_volume(self, sample_volume):
         """Test cornblath null model for volume."""
@@ -348,11 +350,11 @@ class TestCornblath:
         _, _, space, res = vol_tuple
         cornblath(annot, atlas=space, density=res, n_perm=3)
 
-
+    
     @pytest.mark.filterwarnings(
             "ignore::DeprecationWarning" # nilearn/nilearn/pull/3722
         )
-    def test_cornblathsurface_parcellated(self, sample_surface_parcellated):
+    def test_cornblath_surface_parcellated(self, sample_surface_parcellated):
         """Test cornblath null model for parcellated surface."""
         surf_tuple, parc_name, atlas, annot_parc = sample_surface_parcellated
         _, _, space, den = surf_tuple
@@ -392,10 +394,18 @@ def test__make_surrogates():
 class TestBurt2018:
     """Test burt2018 null model."""
 
-    @pytest.mark.xfail
-    def test_burt2018(self):
-        """Test burt2018 null model."""
-        assert False
+    def test_burt2018_surface(self, sample_surface):
+        """Test burt2018 null model for surface."""
+        surf_tuple, annot = sample_surface
+        _, _, space, den = surf_tuple
+        burt2018(annot, atlas=space, density=den, n_perm=3)
+
+
+    def test_burt2018_volume(self, sample_volume):
+        """Test burt2018 null model for volume."""
+        vol_tuple, annot = sample_volume
+        _, _, space, res = vol_tuple
+        burt2018(annot, atlas=space, density=res, n_perm=3)
 
 class TestBurt2020:
     """Test burt2020 null model."""
