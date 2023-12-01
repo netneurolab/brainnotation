@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 """For testing neuromaps.datasets._osf functionality."""
 
-try:
-    import importlib.resources
+import pytest
+import importlib.resources
+from neuromaps.datasets import _osf
+
+if getattr(importlib.resources, 'files', None) is not None:
     _importlib_avail = True
-except ImportError:
+else:
     from pkg_resources import resource_filename
     _importlib_avail = False
-
-import pytest
-
-from neuromaps.datasets import _osf
 
 
 @pytest.mark.xfail

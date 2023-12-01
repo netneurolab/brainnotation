@@ -3,14 +3,14 @@
 
 import json
 import os
-try:
-    import importlib.resources
+import importlib.resources
+import requests
+
+if getattr(importlib.resources, 'files', None) is not None:
     _importlib_avail = True
-except ImportError:
+else:
     from pkg_resources import resource_filename
     _importlib_avail = False
-
-import requests
 
 RESTRICTED = ["grh4d"]
 

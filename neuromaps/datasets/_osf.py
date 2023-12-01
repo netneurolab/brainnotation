@@ -2,17 +2,16 @@
 """Functions for working with data/osf.json file."""
 
 import os
-try:
-    import importlib.resources
+import json
+import importlib.resources
+from nilearn.datasets.utils import _md5_sum_file
+from neuromaps.datasets.utils import _get_session
+
+if getattr(importlib.resources, 'files', None) is not None:
     _importlib_avail = True
-except ImportError:
+else:
     from pkg_resources import resource_filename
     _importlib_avail = False
-import json
-
-from nilearn.datasets.utils import _md5_sum_file
-
-from neuromaps.datasets.utils import _get_session
 
 # uniquely identify each item ('hemi' can be None)
 FNAME_KEYS = ['source', 'desc', 'space', 'den', 'res', 'hemi']

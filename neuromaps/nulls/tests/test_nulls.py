@@ -2,6 +2,7 @@
 """For testing neuromaps.nulls.nulls functionality."""
 
 import pytest
+from neuromaps.nulls.nulls import *
 from neuromaps.datasets import fetch_annotation
 from neuromaps.parcellate import Parcellater
 from neuromaps.images import annot_to_gifti, dlabel_to_gifti
@@ -65,7 +66,16 @@ def sample_surface_parcellated(sample_surface, request):
     if request.param[0].startswith("schaefer"):
         parc_name, parc_fetcher, parc_label = request.param
         if space == "fsaverage":
-            atlas = annot_to_gifti(parc_fetcher(version="fsaverage")[parc_label])
+            if den == "164k":
+                atlas = annot_to_gifti(parc_fetcher(version="fsaverage")[parc_label])
+            elif den == "41k":
+                atlas = annot_to_gifti(parc_fetcher(version="fsaverage6")[parc_label])
+            elif den == "10k":
+                atlas = annot_to_gifti(parc_fetcher(version="fsaverage5")[parc_label])
+            else:
+                raise NotImplementedError(
+                    f"Invalid surface density: {den} for fsaverage space"
+                )
         elif space == "fsLR":
             atlas = dlabel_to_gifti(parc_fetcher(version="fslr32k")[parc_label])
         else:
@@ -76,7 +86,7 @@ def sample_surface_parcellated(sample_surface, request):
 
     annot_parc = parc.fit_transform(annot, space)
 
-    return surf_tuple, parc_name, annot_parc
+    return surf_tuple, parc_name, atlas, annot_parc
 
 
 @pytest.fixture(
@@ -98,75 +108,244 @@ def sample_volume_parcellated(sample_volume, request):
 
     annot_parc = parc.fit_transform(annot, space)
 
-    return vol_tuple, parc_name, annot_parc
+    return vol_tuple, parc_name, atlas, annot_parc
+
+class TestFixturesSmoke:
+
+    def test_fixture_surface_smoke(self, sample_surface):
+        """Test fetching surface annotation."""
+        print(sample_surface[0])
+        assert True
 
 
-def test_fixture_surface_smoke(sample_surface):
-    """Test fetching surface annotation."""
-    # print(sample_surface[0])
-    pass
-
-def test_fixture_volume_smoke(sample_volume):
-    """Test fetching volume annotation."""
-    # print(sample_volume[0])
-    pass
-
-def test_fixture_surface_parcellated_smoke(sample_surface_parcellated):
-    """Test fetching parcellated surface annotation."""
-    surf_tuple, parc_name, annot_parc = sample_surface_parcellated
-    # print(surf_tuple, parc_name, annot_parc.shape[0])
-    pass
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning") # nilearn/nilearn/pull/3722
-def test_fixture_volume_parcellated_smoke(sample_volume_parcellated):
-    """Test fetching parcellated volume annotation."""
-    vol_tuple, parc_name, annot_parc = sample_volume_parcellated
-    # print(vol_tuple, parc_name, annot_parc.shape[0])
-    pass
+    def test_fixture_volume_smoke(self, sample_volume):
+        """Test fetching volume annotation."""
+        print(sample_volume[0])
+        assert True
 
 
-@pytest.mark.xfail
-def test_alexander_bloch(sample_surface):
-    """Test alexander-bloch null model."""
-    assert False
-
-@pytest.mark.xfail
-def test_alexander_bloch_parcellated(sample_surface, sample_parcellation):
-    """Test alexander-bloch null model for parcellated maps."""
-    assert False
+    def test_fixture_surface_parcellated_smoke(self, sample_surface_parcellated):
+        """Test fetching parcellated surface annotation."""
+        surf_tuple, parc_name, atlas, annot_parc = sample_surface_parcellated
+        print(surf_tuple, parc_name, atlas, annot_parc.shape[0])
+        assert True
 
 
-@pytest.mark.xfail
-def test_vasa():
-    """Test vasa null model."""
-    assert False
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # nilearn/nilearn/pull/3722
+    def test_fixture_volume_parcellated_smoke(self, sample_volume_parcellated):
+        """Test fetching parcellated volume annotation."""
+        vol_tuple, parc_name, atlas, annot_parc = sample_volume_parcellated
+        print(vol_tuple, parc_name, atlas, annot_parc.shape[0])
+        assert True
 
-@pytest.mark.xfail
-def test_vasa_parcellated():
-    """Test vasa null model for parcellated maps."""
-    assert False
+class TestAlexanderBloch:
 
-
-@pytest.mark.xfail
-def test_hungarian():
-    """Test hungarian null model."""
-    assert False
-
-@pytest.mark.xfail
-def test_hungarian_parcellated():
-    """Test hungarian null model for parcellated maps."""
-    assert False
-
-@pytest.mark.xfail
-def test_baum():
-    """Test baum null model."""
-    assert False
+    def test_alexander_bloch_surface(self, sample_surface):
+        """Test alexander-bloch null model for surface."""
+        surf_tuple, annot = sample_surface
+        _, _, space, den = surf_tuple
+        alexander_bloch(annot, atlas=space, density=den, n_perm=3)
 
 
-@pytest.mark.xfail
-def test_cornblath():
-    """Test cornblath null model."""
-    assert False
+    @pytest.mark.xfail
+    def test_alexander_bloch_volume(self, sample_volume):
+        """Test alexander-bloch null model for volume."""
+        vol_tuple, annot = sample_volume
+        _, _, space, res = vol_tuple
+        alexander_bloch(annot, atlas=space, density=res, n_perm=3)
+
+
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_alexander_bloch_surface_parcellated(self, sample_surface_parcellated):
+        """Test alexander-bloch null model for parcellated surface."""
+        surf_tuple, parc_name, atlas, annot_parc = sample_surface_parcellated
+        _, _, space, den = surf_tuple
+        print(surf_tuple, parc_name, atlas, annot_parc.shape)
+
+        alexander_bloch(
+            annot_parc, atlas=space, density=den, parcellation=atlas, n_perm=3
+        )
+
+
+    @pytest.mark.xfail
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_alexander_bloch_volume_parcellated(self, sample_volume_parcellated):
+        """Test alexander-bloch null model for parcellated volume."""
+        vol_tuple, parc_name, atlas, annot_parc = sample_volume_parcellated
+        _, _, space, res = vol_tuple
+        print(vol_tuple, parc_name, atlas, annot_parc.shape)
+
+        alexander_bloch(
+            annot_parc, atlas=space, density=res, parcellation=atlas, n_perm=3
+        )
+
+class TestVasa:
+
+    @pytest.mark.xfail
+    def test_vasa_surface(self, sample_surface):
+        """Test vasa null model for surface."""
+        surf_tuple, annot = sample_surface
+        _, _, space, den = surf_tuple
+        vasa(annot, atlas=space, density=den, n_perm=3)
+
+
+    @pytest.mark.xfail
+    def test_vasa_volume(self, sample_volume):
+        """Test vasa null model for volume."""
+        vol_tuple, annot = sample_volume
+        _, _, space, res = vol_tuple
+        vasa(annot, atlas=space, density=res, n_perm=3)
+
+
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_vasa_surface_parcellated(self, sample_surface_parcellated):
+        """Test vasa null model for parcellated surface."""
+        surf_tuple, parc_name, atlas, annot_parc = sample_surface_parcellated
+        _, _, space, den = surf_tuple
+        print(surf_tuple, parc_name, atlas, annot_parc.shape)
+
+        vasa(
+            annot_parc, atlas=space, density=den, parcellation=atlas, n_perm=3
+        )
+
+
+    @pytest.mark.xfail
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_vasa_volume_parcellated(self, sample_volume_parcellated):
+        """Test vasa null model for parcellated volume."""
+        vol_tuple, parc_name, atlas, annot_parc = sample_volume_parcellated
+        _, _, space, res = vol_tuple
+        print(vol_tuple, parc_name, atlas, annot_parc.shape)
+
+        vasa(
+            annot_parc, atlas=space, density=res, parcellation=atlas, n_perm=3
+        )
+
+class TestHungarian:
+
+    @pytest.mark.xfail
+    def test_hungarian_surface(self, sample_surface):
+        """Test hungarian null model for surface."""
+        surf_tuple, annot = sample_surface
+        _, _, space, den = surf_tuple
+        hungarian(annot, atlas=space, density=den, n_perm=3)
+
+
+    @pytest.mark.xfail
+    def test_hungarian_volume(self, sample_volume):
+        """Test hungarian null model for volume."""
+        vol_tuple, annot = sample_volume
+        _, _, space, res = vol_tuple
+        hungarian(annot, atlas=space, density=res, n_perm=3)
+
+
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_hungarian_surface_parcellated(self, sample_surface_parcellated):
+        """Test hungarian null model for parcellated surface."""
+        surf_tuple, parc_name, atlas, annot_parc = sample_surface_parcellated
+        _, _, space, den = surf_tuple
+        print(surf_tuple, parc_name, atlas, annot_parc.shape)
+
+        hungarian(
+            annot_parc, atlas=space, density=den, parcellation=atlas, n_perm=3
+        )
+
+
+    @pytest.mark.xfail
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_hungarian_volume_parcellated(self, sample_volume_parcellated):
+        """Test hungarian null model for parcellated volume."""
+        vol_tuple, parc_name, atlas, annot_parc = sample_volume_parcellated
+        _, _, space, res = vol_tuple
+        print(vol_tuple, parc_name, atlas, annot_parc.shape)
+
+        hungarian(
+            annot_parc, atlas=space, density=res, parcellation=atlas, n_perm=3
+        )
+
+class TestBaum:
+
+    @pytest.mark.xfail
+    def test_baum_surface(self, sample_surface):
+        """Test baum null model for surface."""
+        surf_tuple, annot = sample_surface
+        _, _, space, den = surf_tuple
+        baum(annot, atlas=space, density=den, n_perm=3)
+
+
+    @pytest.mark.xfail
+    def test_baum_volume(self, sample_volume):
+        """Test baum null model for volume."""
+        vol_tuple, annot = sample_volume
+        _, _, space, res = vol_tuple
+        baum(annot, atlas=space, density=res, n_perm=3)
+
+
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_baum_surface_parcellated(self, sample_surface_parcellated):
+        """Test baum null model for parcellated surface."""
+        surf_tuple, parc_name, atlas, annot_parc = sample_surface_parcellated
+        _, _, space, den = surf_tuple
+        print(surf_tuple, parc_name, atlas, annot_parc.shape)
+
+        baum(
+            annot_parc, atlas=space, density=den, parcellation=atlas, n_perm=3
+        )
+
+
+    @pytest.mark.xfail
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_baum_volume_parcellated(self, sample_volume_parcellated):
+        """Test baum null model for parcellated volume."""
+        vol_tuple, parc_name, atlas, annot_parc = sample_volume_parcellated
+        _, _, space, res = vol_tuple
+        print(vol_tuple, parc_name, atlas, annot_parc.shape)
+
+        baum(
+            annot_parc, atlas=space, density=res, parcellation=atlas, n_perm=3
+        )
+
+class TestCornblath:
+
+    @pytest.mark.xfail
+    def test_cornblath_surface(self, sample_surface):
+        """Test cornblath null model for surface."""
+        surf_tuple, annot = sample_surface
+        _, _, space, den = surf_tuple
+        cornblath(annot, atlas=space, density=den, n_perm=3)
+
+
+    @pytest.mark.xfail
+    def test_cornblath_volume(self, sample_volume):
+        """Test cornblath null model for volume."""
+        vol_tuple, annot = sample_volume
+        _, _, space, res = vol_tuple
+        cornblath(annot, atlas=space, density=res, n_perm=3)
+
+
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_cornblathsurface_parcellated(self, sample_surface_parcellated):
+        """Test cornblath null model for parcellated surface."""
+        surf_tuple, parc_name, atlas, annot_parc = sample_surface_parcellated
+        _, _, space, den = surf_tuple
+        print(surf_tuple, parc_name, atlas, annot_parc.shape)
+
+        cornblath(
+            annot_parc, atlas=space, density=den, parcellation=atlas, n_perm=3
+        )
+
+
+    @pytest.mark.xfail
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning") # neuromaps.images.load_data()
+    def test_cornblath_volume_parcellated(self, sample_volume_parcellated):
+        """Test cornblath null model for parcellated volume."""
+        vol_tuple, parc_name, atlas, annot_parc = sample_volume_parcellated
+        _, _, space, res = vol_tuple
+        print(vol_tuple, parc_name, atlas, annot_parc.shape)
+
+        cornblath(
+            annot_parc, atlas=space, density=res, parcellation=atlas, n_perm=3
+        )
 
 
 @pytest.mark.xfail
@@ -180,20 +359,24 @@ def test__make_surrogates():
     """Test making surrogates."""
     assert False
 
+class TestBurt2018:
 
-@pytest.mark.xfail
-def test_burt2018():
-    """Test burt2018 null model."""
-    assert False
+    @pytest.mark.xfail
+    def test_burt2018(self):
+        """Test burt2018 null model."""
+        assert False
+
+class TestBurt2020:
+
+    @pytest.mark.xfail
+    def test_burt2020(self):
+        """Test burt2020 null model."""
+        assert False
 
 
-@pytest.mark.xfail
-def test_burt2020():
-    """Test burt2020 null model."""
-    assert False
+class TestMoran:
 
-
-@pytest.mark.xfail
-def test_moran():
-    """Test moran null model."""
-    assert False
+    @pytest.mark.xfail
+    def test_moran(self):
+        """Test moran null model."""
+        assert False
