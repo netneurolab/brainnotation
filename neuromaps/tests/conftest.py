@@ -5,6 +5,11 @@ import shutil
 
 import pytest
 
+def pytest_configure(config):
+    """Add markers for tests."""
+    config.addinivalue_line(
+        "markers", "workbench: mark test to run with Connectome Workbench"
+    )
 
 def pytest_runtest_setup(item):
     """Skip tests that require workbench if it's not installed."""

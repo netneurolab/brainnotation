@@ -3,9 +3,14 @@
 
 import json
 import os
-from pkg_resources import resource_filename
-
+import importlib.resources
 import requests
+
+if getattr(importlib.resources, 'files', None) is not None:
+    _importlib_avail = True
+else:
+    from pkg_resources import resource_filename
+    _importlib_avail = False
 
 RESTRICTED = ["grh4d"]
 
@@ -70,8 +75,14 @@ def get_dataset_info(name, return_restricted=True):
     dataset : dict or list-of-dict
         Information on requested data
     """
-    fn = resource_filename('neuromaps',
-                           os.path.join('datasets', 'data', 'osf.json'))
+    if _importlib_avail:
+        fn = importlib.resources.files("neuromaps") / "datasets/data/osf.json"
+    else:
+        fn = resource_filename(
+            'neuromaps',
+            os.path.join('datasets', 'data', 'osf.json')
+        )
+
     with open(fn) as src:
         osf_resources = _osfify_urls(json.load(src), return_restricted)
 
