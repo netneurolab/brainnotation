@@ -276,3 +276,84 @@ def efficient_pearsonr(a, b, ddof=1, nan_policy='propagate', return_pval=True):
         return corr, prob
 
     return corr
+
+
+def _sw_nest_enrich_score(L, network_ind, one_sided=True):
+    """
+    Calculate the network enrichment score for a given statistic.
+
+    Parameters
+    ----------
+    L : array_like, shape (n_vertices,)
+        Statistics
+    network_ind : array_like, shape (n_vertices,)
+        Network indicator, where 1 indicates membership in the network of
+        interest and 0 otherwise.
+    one_sided : bool, optional
+        Whether to perform a one-sided test. Default: True
+
+    Returns
+    -------
+    enrich_score : float
+        Network enrichment score
+    """
+    L_order = np.argsort(L)[::-1]
+    L_sorted = L[L_order]
+    network_ind_sorted = network_ind[L_order]
+
+    if one_sided:
+        L_sorted_abs = np.abs(L_sorted)
+        P_hit_numerator = np.cumsum(L_sorted_abs * network_ind_sorted)
+    else:
+        P_hit_numerator = np.cumsum(network_ind_sorted)
+    P_hit = P_hit_numerator / P_hit_numerator[-1]
+
+    P_miss_numerator = np.cumsum(1 - network_ind_sorted)
+    P_miss = P_miss_numerator / P_miss_numerator[-1]
+
+    running_sum = P_hit - P_miss
+    enrich_score = np.max(np.abs(running_sum))
+
+    return enrich_score
+
+
+def sw_nest(stat_emp, stat_perm, network_ind, one_sided=True):
+    """
+    Network Enrichment Significance Testing (NEST) from Weinstein et al., 2024.
+
+    Check `original implementation <https://github.com/smweinst/NEST>`_ for more
+    details.
+
+    Parameters
+    ----------
+    stat_emp : array_like, shape (n_vertices,)
+        Empirical statistics
+    stat_perm : array_like, shape (n_permutations, n_vertices)
+        Permuted statistics. Each row corresponds to a permutation calculated by
+        permuting the subjects and re-estimating the statistic.
+    network_ind : array_like, shape (n_vertices,)
+        Network indicator, where 1 indicates membership in the network of
+        interest and 0 otherwise.
+    one_sided : bool, optional
+        Whether to perform a one-sided test. Default: True
+
+    Returns
+    -------
+    p : float
+        Significance level
+
+    References
+    ----------
+    .. [1] Weinstein, S. M., Vandekar, S. N., Li, B., Alexander-Bloch, A. F.,
+       Raznahan, A., Li, M., Gur, R. E., Gur, R. C., Roalf, D. R., Park, M. T.
+       M., Chakravarty, M., Baller, E. B., Linn, K. A., Satterthwaite, T. D., &
+       Shinohara, R. T. (2024). Network enrichment significance testing in
+       brain-phenotype association studies. Human Brain Mapping, 45(8), e26714.
+       https://doi.org/10.1002/hbm.26714
+
+    """
+    es_emp = _sw_nest_enrich_score(stat_emp, network_ind, one_sided=one_sided)
+    es_perm = np.array([
+        _sw_nest_enrich_score(s, network_ind, one_sided=one_sided) for s in stat_perm
+    ])
+    return (1 + np.sum(es_perm > es_emp)) / (1 + len(es_perm))
