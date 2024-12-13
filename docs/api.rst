@@ -207,6 +207,7 @@ Parametric spatial null models (for volumetric and surface images)
 
     neuromaps.stats.compare_images
     neuromaps.stats.permtest_metric
+    neuromaps.stats.sw_nest
 
 .. _ref_transforms:
 
